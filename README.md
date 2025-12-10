@@ -11,9 +11,9 @@ A comprehensive collection of useful commands, guidelines, and cheatsheets for v
 - [Node.js](#-nodejs)
 - [Kubernetes](#-kubernetes)
 - [Terraform](#-terraform)
-- [Docker](#-docker) *(Coming Soon)*
-- [Git](#-git) *(Coming Soon)*
-- [Linux/Bash](#-linuxbash) *(Coming Soon)*
+- [Docker](#-docker)
+- [Git](#-git)
+- [Bash & Linux](#-bash--linux)
 
 ---
 
@@ -90,25 +90,75 @@ terraform apply
 
 ## 🐳 Docker
 
-**Location:** `docker/docker-cheatsheet.md` *(Coming Soon)*
+**Location:** [`docker/docker-cheatsheet.md`](./docker/docker-cheatsheet.md)
 
-Containerization commands and best practices.
+Master containerization with this comprehensive guide:
+- Image management and building
+- Container lifecycle operations
+- Networking and port mapping
+- Volumes and persistent storage
+- Docker Compose orchestration
+- Multi-stage builds
+- Health checks and resource limits
+- Debugging and troubleshooting
+- Cleanup and optimization
+
+**Quick Start:**
+```bash
+docker build -t myapp:latest .
+docker run -d -p 8080:80 myapp:latest
+docker-compose up -d
+```
 
 ---
 
 ## 🔀 Git
 
-**Location:** `git/git-cheatsheet.md` *(Coming Soon)*
+**Location:** [`git/git-cheatsheet.md`](./git/git-cheatsheet.md)
 
-Version control commands and workflows.
+Version control made simple:
+- Installation and configuration
+- Basic workflow (add, commit, push)
+- Branch management and merging
+- Remote operations
+- Tags and releases
+- History and logs
+- Undoing changes
+- Stashing
+- Advanced operations (rebase, cherry-pick, submodules)
+
+**Quick Start:**
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+git push -u origin main
+```
 
 ---
 
-## 🐧 Linux/Bash
+## 🐧 Bash & Linux
 
-**Location:** `linux/bash-cheatsheet.md` *(Coming Soon)*
+**Location:** [`bash/bash-cheatsheet.md`](./bash/bash-cheatsheet.md)
 
-Essential Linux and Bash commands for daily operations.
+Essential Linux and Bash commands for daily operations:
+- File and directory operations
+- Text processing (grep, sed, awk)
+- Permissions and ownership
+- Process management
+- Redirection and pipes
+- Compression and archives
+- Network commands
+- Advanced Bash features
+- Useful one-liners
+
+**Quick Start:**
+```bash
+ls -la
+grep "pattern" file
+find . -name "*.txt"
+ps aux | grep process
+```
 
 ---
 
