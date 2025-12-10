@@ -308,44 +308,132 @@ docker run --tmpfs /tmp nginx
 
 ## 🏗️ Act VI: Docker Compose (Orchestration Made Easy)
 
-### Docker Compose Basics
+### Installation
+
+```bash
+# Install Docker Compose (standalone)
+# Linux
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# macOS
+brew install docker-compose
+
+# Verify installation
+docker-compose --version
+docker compose version  # Docker Compose V2 (plugin)
+```
+
+### Basic Commands
 
 ```bash
 # Start services
 docker-compose up
-docker-compose up -d          # Detached mode
-docker-compose up --build    # Build images first
+docker-compose up -d          # Detached mode (background)
+docker-compose up --build    # Build images before starting
+docker-compose up --force-recreate  # Recreate containers
 
 # Stop services
 docker-compose down
 docker-compose down -v       # Remove volumes too
+docker-compose down --remove-orphans  # Remove orphaned containers
+docker-compose down -t 30    # Timeout in seconds
 
 # View logs
 docker-compose logs
 docker-compose logs -f       # Follow logs
 docker-compose logs <service>
+docker-compose logs --tail=100  # Last 100 lines
+docker-compose logs --since 10m  # Last 10 minutes
 
 # Execute command
 docker-compose exec <service> <command>
 docker-compose exec web bash
+docker-compose exec -T web npm test  # Non-interactive
+
+# Run one-off command
+docker-compose run <service> <command>
+docker-compose run web npm install
+docker-compose run --rm web bash  # Remove after execution
 
 # Scale services
 docker-compose up --scale web=3
+docker-compose up --scale web=3 --scale worker=2
 
 # Build services
 docker-compose build
 docker-compose build --no-cache
+docker-compose build <service>  # Build specific service
+docker-compose build --parallel  # Build in parallel
 
 # List services
 docker-compose ps
+docker-compose ps -a          # All services
 
 # Start/stop/restart
 docker-compose start
+docker-compose start <service>
 docker-compose stop
+docker-compose stop <service>
 docker-compose restart
+docker-compose restart <service>
+
+# Pause/unpause
+docker-compose pause
+docker-compose pause <service>
+docker-compose unpause
+docker-compose unpause <service>
 ```
 
-### docker-compose.yml Example
+### Advanced Commands
+
+```bash
+# Validate configuration
+docker-compose config
+docker-compose config --services  # List services
+docker-compose config --volumes   # List volumes
+
+# Pull images
+docker-compose pull
+docker-compose pull <service>
+
+# Push images (if using build)
+docker-compose push
+docker-compose push <service>
+
+# View service status
+docker-compose top
+docker-compose top <service>
+
+# Port mapping
+docker-compose port <service> <port>
+docker-compose port web 80
+
+# Events stream
+docker-compose events
+docker-compose events --json
+
+# Kill services
+docker-compose kill
+docker-compose kill -s SIGTERM  # Send specific signal
+docker-compose kill <service>
+
+# Remove stopped containers
+docker-compose rm
+docker-compose rm -f           # Force remove
+docker-compose rm -v           # Remove volumes
+
+# Use specific compose file
+docker-compose -f docker-compose.prod.yml up
+docker-compose -f docker-compose.yml -f docker-compose.override.yml up
+
+# Use specific project name
+docker-compose -p myproject up
+```
+
+### docker-compose.yml Examples
+
+#### Basic Example
 
 ```yaml
 version: '3.8'
@@ -373,6 +461,290 @@ services:
 
 volumes:
   db-data:
+```
+
+#### Advanced Example
+
+```yaml
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    image: myapp:latest
+    container_name: myapp-web
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./app:/app
+      - ./config:/config:ro  # Read-only
+      - web-data:/data
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://user:pass@db:5432/mydb
+    env_file:
+      - .env
+      - .env.production
+    depends_on:
+      - db
+      - redis
+    networks:
+      - frontend
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  db:
+    image: postgres:15-alpine
+    container_name: myapp-db
+    environment:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - backend
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: myapp-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - backend
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    container_name: myapp-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - web
+    networks:
+      - frontend
+    restart: always
+
+volumes:
+  db-data:
+  redis-data:
+  web-data:
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+```
+
+#### Development Override Example
+
+```yaml
+# docker-compose.override.yml (auto-loaded in dev)
+version: '3.8'
+
+services:
+  web:
+    build:
+      target: development
+    volumes:
+      - .:/app
+      - /app/node_modules  # Anonymous volume to prevent overwrite
+    environment:
+      - NODE_ENV=development
+      - DEBUG=true
+    ports:
+      - "9229:9229"  # Node.js debugger
+    command: npm run dev
+```
+
+### Compose File Features
+
+#### Build Options
+
+```yaml
+services:
+  web:
+    build:
+      context: ./dir
+      dockerfile: Dockerfile.prod
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+        - NODE_ENV=production
+      target: production
+      cache_from:
+        - myapp:latest
+```
+
+#### Health Checks
+
+```yaml
+services:
+  web:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+```
+
+#### Resource Limits
+
+```yaml
+services:
+  web:
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+```
+
+#### Networks
+
+```yaml
+services:
+  web:
+    networks:
+      - frontend
+      - backend
+
+networks:
+  frontend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  backend:
+    external: true  # Use existing network
+```
+
+#### Volumes
+
+```yaml
+services:
+  web:
+    volumes:
+      - ./data:/app/data           # Bind mount
+      - app-data:/app/storage      # Named volume
+      - /var/lib/mysql             # Anonymous volume
+
+volumes:
+  app-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /path/on/host
+```
+
+#### Environment Variables
+
+```yaml
+services:
+  web:
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://...
+    env_file:
+      - .env
+      - .env.production
+    environment:
+      - DEBUG=${DEBUG:-false}  # Default value
+```
+
+#### Dependencies
+
+```yaml
+services:
+  web:
+    depends_on:
+      - db
+      - redis
+    # Or with conditions
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+```
+
+### Useful One-Liners
+
+```bash
+# Rebuild and restart specific service
+docker-compose up -d --build web
+
+# View logs for specific service
+docker-compose logs -f --tail=100 web
+
+# Execute command in running service
+docker-compose exec web npm test
+
+# Run one-off command in new container
+docker-compose run --rm web npm install
+
+# Scale specific service
+docker-compose up -d --scale web=3
+
+# Stop all services and remove volumes
+docker-compose down -v
+
+# Validate compose file
+docker-compose config
+
+# List all services
+docker-compose config --services
+
+# Pull latest images
+docker-compose pull
+
+# Build without cache
+docker-compose build --no-cache
+
+# View resource usage
+docker-compose top
+
+# Copy file from container
+docker-compose cp web:/app/file.txt ./
+
+# Copy file to container
+docker-compose cp ./file.txt web:/app/
 ```
 
 ---
@@ -618,6 +990,12 @@ docker info
 | Volume mount | `docker run -v /path:/path <image>` |
 | Docker Compose up | `docker-compose up -d` |
 | Docker Compose down | `docker-compose down` |
+| Docker Compose logs | `docker-compose logs -f` |
+| Docker Compose exec | `docker-compose exec <service> bash` |
+| Docker Compose build | `docker-compose build` |
+| Docker Compose scale | `docker-compose up --scale web=3` |
+| Docker Compose config | `docker-compose config` |
+| Docker Compose ps | `docker-compose ps` |
 | Clean up | `docker system prune` |
 
 ---
