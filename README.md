@@ -14,6 +14,7 @@ A comprehensive collection of useful commands, guidelines, and cheatsheets for v
 - [Docker](#-docker)
 - [Git](#-git)
 - [Bash & Linux](#-bash--linux)
+- [AWS CLI](#-aws-cli)
 
 ---
 
@@ -158,6 +159,32 @@ ls -la
 grep "pattern" file
 find . -name "*.txt"
 ps aux | grep process
+```
+
+---
+
+## ☁️ AWS CLI
+
+**Location:** [`aws/aws-cli-cheatsheet.md`](./aws/aws-cli-cheatsheet.md)
+
+Master AWS from the command line:
+- Installation and configuration
+- EC2 instance management
+- S3 bucket and file operations
+- IAM user and policy management
+- VPC and networking
+- Lambda functions
+- CloudFormation stacks
+- CloudWatch, Route 53, RDS, ECS, ECR
+- Query and output formatting
+- Useful one-liners
+
+**Quick Start:**
+```bash
+aws configure
+aws ec2 describe-instances
+aws s3 ls
+aws lambda list-functions
 ```
 
 ---
